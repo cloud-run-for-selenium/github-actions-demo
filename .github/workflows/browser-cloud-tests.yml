@@ -54,6 +54,7 @@ jobs:
         else
           echo "spec_files_path=./test-async/specs/*.js" >> $GITHUB_OUTPUT
         fi
+        echo "To see the tests running in your browser, visit ${{ matrix.cloud-container-url }}"
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
