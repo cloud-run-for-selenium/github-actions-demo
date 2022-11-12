@@ -73,6 +73,5 @@ jobs:
       run: |
         echo execute tests with base url $BASEURL
         echo execute tests with spec file path $SPEC_FILES_PATH
-        BROWSER=`echo $URL | sed 's/-.*//g'`
-        BASEURL=$BASEURL npx wdio wdio.$BROWSER-cloud-container-service.conf.js --spec $SPEC_FILES_PATH
+        BASEURL=$BASEURL npx wdio wdio.browser-cloud-container-service.conf.js --spec $SPEC_FILES_PATH
 
