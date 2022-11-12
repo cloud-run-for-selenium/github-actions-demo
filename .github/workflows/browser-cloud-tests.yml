@@ -35,9 +35,7 @@ jobs:
             'firefox-20221112---firefox-containers-nayogqfkwq-uc.a.run.app'
         ]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-    
-    env:
-      cloud-container-url: 
+
     steps:
     - uses: actions/checkout@v3
       with:
