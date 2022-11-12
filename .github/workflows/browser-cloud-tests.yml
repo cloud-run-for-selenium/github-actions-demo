@@ -1,0 +1,79 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Cloud Run Tests
+
+on:
+  #push:
+  #  branches: [ "master" ]
+  #pull_request:
+  #  branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Enter domain environment to run the tests on that has the-internet demo site deployed'
+        required: false
+        default: 'https://ossnet.alwaysdata.net'
+      spec_files_path:
+        description: 'Enter path to spec file(s)'
+        required: false
+        default: './test-async/specs/*.js'
+        
+jobs:
+  tests:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      #max-parallel: 1
+      matrix:
+        node-version: [16.x]
+        cloud-container-url: [
+            'chrome-20221112---chrome-containers-nayogqfkwq-uc.a.run.app',
+            'edge-20221112---edge-containers-nayogqfkwq-uc.a.run.app',
+            'firefox-20221112---firefox-containers-nayogqfkwq-uc.a.run.app'
+        ]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    
+    env:
+      cloud-container-url: 
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: 'cloud-run-for-selenium/webdriverio-the-internet-passing-tests-demo'
+    - name: Setup environment variables
+      if: always()
+      id: environment
+      run: |
+        if [ "${{ github.event.inputs.base_url }}" != '' ]; then
+          echo "base_url=${{ github.event.inputs.base_url }}" >> $GITHUB_OUTPUT
+        else
+          echo "base_url=https://ossnet.alwaysdata.net" >> $GITHUB_OUTPUT
+        fi
+        if [ "${{ github.event.inputs.spec_files_path }}" != '' ]; then
+          echo "spec_files_path=${{ github.event.inputs.spec_files_path }}" >> $GITHUB_OUTPUT
+        else
+          echo "spec_files_path=./test-async/specs/*.js" >> $GITHUB_OUTPUT
+        fi
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: Install npm dependencies
+      run: |
+        echo 'chromedriver_skip_download=true' > .npmrc
+        npm ci
+    - name: Run tests on WebdriverIO on Google Cloud Run
+      env:
+        BASEURL: ${{ steps.environment.outputs.base_url }}
+        SPEC_FILES_PATH: ${{ steps.environment.outputs.spec_files_path }}
+        CLOUD_CONTAINER_APP_URL: ${{ matrix.cloud-container-url }}
+        CLOUD_CONTAINER_ACCESS_TOKEN: ${{ secrets.CLOUD_CONTAINER_ACCESS_TOKEN }}
+      run: |
+        echo execute tests with base url $BASEURL
+        echo execute tests with spec file path $SPEC_FILES_PATH
+        BROWSER=`echo $URL | sed 's/-.*//g'`
+        BASEURL=$BASEURL npx wdio wdio.$BROWSER-cloud-container-service.conf.js --spec $SPEC_FILES_PATH
+
